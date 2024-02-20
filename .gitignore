@@ -1,0 +1,35 @@
+# signup database email
+# mongodb+srv://timileyinolayuwa:CMvRsRvRHxV3E1Aj@signupdata.ybajhry.mongodb.net/?retryWrites=true&w=majority
+# signup database password
+# CMvRsRvRHxV3E1Aj
+# username
+# timileyinolayuwa
+# signup database email
+# mongodb+srv://timileyinolayuwa:CMvRsRvRHxV3E1Aj@signupdata.ybajhry.mongodb.net/?retryWrites=true&w=majority
+# signup database password
+# CMvRsRvRHxV3E1Aj
+# username
+# timileyinolayuwa
+
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
