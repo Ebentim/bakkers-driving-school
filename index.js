@@ -1,10 +1,14 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const helmet = require("helmet");
 
 const PORT = 5000;
+
+const crypto = require("crypto");
+const secretKey = crypto.randomBytes(256).toString("hex");
 
 // Use middleware
 app.use(express.json());
@@ -85,18 +89,19 @@ app.post("/api/signin", async (req, res) => {
     if (!passwordMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    // any other actions?
-    res.status(200).json({ message: "Sign-in successful" });
+
+    const token = jwt.sign({ userid: user._id, email: user.email }, secretKey, {
+      expiresIn: "1h",
+    });
+
+    // Return the token in the response
+    res.status(200).json({ message: "Sign-in successful", accessToken: token });
   } catch (error) {
     console.error("Error during sign-in:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// app.post("/api/dashboard", async(req, res) =>{
-//   const {firstname, lastname, address, email, birthdate}
-// })
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
