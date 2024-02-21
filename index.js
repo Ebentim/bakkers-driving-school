@@ -31,6 +31,52 @@ mongoose
 
 // Define mongoose model
 const Profile = require("./models/profile.model");
+const Token = require("./models/token.model");
+
+// Function to save or update token in the database
+const saveOrUpdateTokenToDatabase = async (userId, token) => {
+  try {
+    // Check if a token already exists for the user
+    const existingToken = await Token.findOne({ userId });
+
+    if (existingToken) {
+      // Update the existing token
+      existingToken.accessToken = token;
+      existingToken.expiresAt = Date.now() + 3600000;
+      await existingToken.save();
+    } else {
+      // Create a new Token document
+      const newToken = new Token({
+        userId,
+        accessToken: token,
+        expiresAt: Date.now() + 3600000,
+      });
+
+      // Save the token document to the database
+      await newToken.save();
+    }
+  } catch (error) {
+    throw new Error(
+      "Error saving or updating token to the database: " + error.message
+    );
+  }
+};
+
+// Function to fetch token from the database
+const fetchTokenFromDatabase = async (userId) => {
+  try {
+    // Find the token document for the user
+    const tokenDoc = await Token.findOne({ userId });
+
+    if (tokenDoc) {
+      return tokenDoc.accessToken;
+    } else {
+      throw new Error("Token not found for user");
+    }
+  } catch (error) {
+    throw new Error("Error fetching token from the database: " + error.message);
+  }
+};
 
 // Saves user signup details
 app.post("/api/signup", async (req, res) => {
@@ -93,11 +139,74 @@ app.post("/api/signin", async (req, res) => {
     const token = jwt.sign({ userid: user._id, email: user.email }, secretKey, {
       expiresIn: "1h",
     });
-
+    // saves or updates Token to the database
+    await saveOrUpdateTokenToDatabase(user._id, token);
     // Return the token in the response
     res.status(200).json({ message: "Sign-in successful", accessToken: token });
   } catch (error) {
     console.error("Error during sign-in:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Add this middleware function
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Unauthorized - Access Token is missing" });
+  }
+
+  jwt.verify(token, secretKey, (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized - Invalid Access Token" });
+    }
+
+    req.user = decoded; // Attach user information to the request object
+    next();
+  });
+};
+
+// middleware to fetch the access token
+const fetchTokenMiddleware = async (req, res, next) => {
+  const userId = req.user.userid;
+
+  try {
+    const token = await fetchTokenFromDatabase(userId);
+
+    if (token.expiresAt < Date.now()) {
+      // Token has expired, delete it from the database
+      await Token.deleteOne({ userId });
+      throw new Error("Token has expired");
+    }
+    req.accessToken = token.accessToken; // Attach the token to the request object
+    next();
+  } catch (error) {
+    console.error("Error fetching token:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Use the middleware for protected routes
+app.use("/api/dashboard", verifyToken, fetchTokenMiddleware);
+
+app.get("/api/dashboard", async (req, res) => {
+  const accessToken = req.accessToken;
+  try {
+    const user = await Profile.findOne({ email: req.user.email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return user data in the response
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

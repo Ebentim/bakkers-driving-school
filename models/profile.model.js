@@ -28,6 +28,10 @@ ProfileSchema = mongoose.Schema(
       type: String,
       required: [true, "Please Enter your password"],
     },
+    startingtime: {
+      type: Number,
+      default: 108000000,
+    },
   },
   {
     timestamps: true,
