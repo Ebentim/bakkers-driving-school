@@ -32,6 +32,7 @@ mongoose
 // Define mongoose model
 const Profile = require("./models/profile.model");
 const Token = require("./models/token.model");
+const Score = require("./models/score.model");
 
 // Function to save or update token in the database
 const saveOrUpdateTokenToDatabase = async (userId, token) => {
@@ -193,6 +194,35 @@ const fetchTokenMiddleware = async (req, res, next) => {
 
 // Use the middleware for protected routes
 app.use("/api/dashboard", verifyToken, fetchTokenMiddleware);
+app.post('/api/submit-quiz/:chapter', verifyToken, async (req, res) => {
+  const { userId } = req.body;
+    const { chapter } = req.params;
+    const { score } = req.body;
+
+  try {
+      // Check if the user has submitted the quiz twice in the last hour
+      const lastTwoSubmissions = await Score.find({
+          userId,
+          createdAt: { $gte: new Date(Date.now() - 3600000) }, // One hour ago
+      }).sort({ createdAt: 'desc' }).limit(2);
+
+      if (lastTwoSubmissions.length === 2) {
+          return res.status(400).json({ error: 'You have reached the limit of quiz attempts in one hour' });
+      }
+
+      // Update the score in the database
+      const updatedScore = await Score.findOneAndUpdate(
+          { userId },
+          { $inc: { [chapter]: score } },
+          { new: true, upsert: true }
+      );
+
+      res.json({ message: 'Quiz submitted successfully', score: updatedScore });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.get("/api/dashboard", async (req, res) => {
   const accessToken = req.accessToken;
