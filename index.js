@@ -4,11 +4,21 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const helmet = require("helmet");
-
+const cors = require("cors");
 const PORT = 5000;
 
 const crypto = require("crypto");
 const secretKey = crypto.randomBytes(256).toString("hex");
+require("dotenv").config();
+
+const dbLink = process.env.MONGODO_URI;
+// Use middleware
+app.use(
+  cors({
+    origin: "https://course-instruction.netlify.app",
+    credentials: true,
+  })
+);
 
 // Use middleware
 app.use(express.json());
@@ -209,11 +219,9 @@ app.post("/api/submit-quiz/:chapter", verifyToken, async (req, res) => {
       .limit(2);
 
     if (lastTwoSubmissions.length === 2) {
-      return res
-        .status(400)
-        .json({
-          error: "You have reached the limit of quiz attempts in one hour",
-        });
+      return res.status(400).json({
+        error: "You have reached the limit of quiz attempts in one hour",
+      });
     }
 
     // Update the score in the database
