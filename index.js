@@ -13,7 +13,10 @@ require("dotenv").config();
 
 // const dbLink = process.env.MONGODO_URI;
 
-const allowedOrigin = ["https://bakkers-driving-school.onrender.com/"];
+const allowedOrigin = [
+  "https://bakkers-driving-school.onrender.com/",
+  "http://localhost:3000/",
+];
 const corsOptions = {
   origin: allowedOrigin,
   optionsSuccessStatus: 200,
