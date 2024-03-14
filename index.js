@@ -14,8 +14,9 @@ require("dotenv").config();
 // const dbLink = process.env.MONGODO_URI;
 
 const allowedOrigin = [
-  "https://bakkers-driving-school.onrender.com/",
-  "http://localhost:3000/",
+  "https://bakkers-driving-school.onrender.com",
+  "https://course-instruction.vercel.app",
+  "http://localhost:3000",
 ];
 const corsOptions = {
   origin: allowedOrigin,
@@ -99,7 +100,7 @@ const fetchTokenFromDatabase = async (userId) => {
 };
 
 // Saves user signup details
-app.post("/api/signup", async (req, res) => {
+app.post("/api/signup", cors(corsOptions), async (req, res) => {
   const { firstname, lastname, address, email, password, birthdate } = req.body;
 
   // Validate required fields
@@ -144,7 +145,7 @@ app.get("/api/signup", (req, res) => {
   res.json();
 });
 
-app.post("/api/signin", async (req, res) => {
+app.post("/api/signin", cors(corsOptions), async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Profile.findOne({ email });
@@ -213,41 +214,46 @@ const fetchTokenMiddleware = async (req, res, next) => {
 
 // Use the middleware for protected routes
 app.use("/api/dashboard", verifyToken, fetchTokenMiddleware);
-app.post("/api/submit-quiz/:chapter", verifyToken, async (req, res) => {
-  const { userId } = req.body;
-  const { chapter } = req.params;
-  const { score } = req.body;
+app.post(
+  "/api/submit-quiz/:chapter",
+  cors(corsOptions),
+  verifyToken,
+  async (req, res) => {
+    const { userId } = req.body;
+    const { chapter } = req.params;
+    const { score } = req.body;
 
-  try {
-    // Check if the user has submitted the quiz twice in the last hour
-    const lastTwoSubmissions = await Score.find({
-      userId,
-      createdAt: { $gte: new Date(Date.now() - 3600000) }, // One hour ago
-    })
-      .sort({ createdAt: "desc" })
-      .limit(2);
+    try {
+      // Check if the user has submitted the quiz twice in the last hour
+      const lastTwoSubmissions = await Score.find({
+        userId,
+        createdAt: { $gte: new Date(Date.now() - 3600000) }, // One hour ago
+      })
+        .sort({ createdAt: "desc" })
+        .limit(2);
 
-    if (lastTwoSubmissions.length === 2) {
-      return res.status(400).json({
-        error: "You have reached the limit of quiz attempts in one hour",
-      });
+      if (lastTwoSubmissions.length === 2) {
+        return res.status(400).json({
+          error: "You have reached the limit of quiz attempts in one hour",
+        });
+      }
+
+      // Update the score in the database
+      const updatedScore = await Score.findOneAndUpdate(
+        { userId },
+        { $inc: { [chapter]: score } },
+        { new: true, upsert: true }
+      );
+
+      res.json({ message: "Quiz submitted successfully", score: updatedScore });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal server error" });
     }
-
-    // Update the score in the database
-    const updatedScore = await Score.findOneAndUpdate(
-      { userId },
-      { $inc: { [chapter]: score } },
-      { new: true, upsert: true }
-    );
-
-    res.json({ message: "Quiz submitted successfully", score: updatedScore });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
   }
-});
+);
 
-app.get("/api/dashboard", async (req, res) => {
+app.get("/api/dashboard", cors(corsOptions), async (req, res) => {
   const accessToken = req.accessToken;
   try {
     const user = await Profile.findOne({ email: req.user.email });
@@ -263,17 +269,6 @@ app.get("/api/dashboard", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-// const quizScoresDB = {};
-
-// app.post('/api/scores/:chapter', (req, res) => {
-//   const { chapter } = req.params;
-//   const { score } = req.body;
-
-//   quizScoresDB[chapter] = score;
-
-//   res.status(200).json({ success: true });
-// });
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
