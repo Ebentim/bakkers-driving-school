@@ -11,14 +11,20 @@ const crypto = require("crypto");
 const secretKey = crypto.randomBytes(256).toString("hex");
 require("dotenv").config();
 
-const dbLink = process.env.MONGODO_URI;
-// Use middleware
-app.use(
-  cors({
-    origin: "https://course-instruction.netlify.app",
-    credentials: true,
-  })
-);
+// const dbLink = process.env.MONGODO_URI;
+
+const allowedOrigin = ["https://bakkers-driving-school.onrender.com/"];
+const corsOptions = {
+  origin: allowedOrigin,
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
+// app.use(
+//   cors({
+//     origin: "https://course-instruction.netlify.app",
+//     credentials: true,
+//   })
+// );
 
 // Use middleware
 app.use(express.json());
