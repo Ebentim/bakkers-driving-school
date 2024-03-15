@@ -270,6 +270,33 @@ app.get("/api/dashboard", cors(corsOptions), async (req, res) => {
   }
 });
 
+app.get(
+  "/api/get-score/:chapter",
+  cors(corsOptions),
+  verifyToken,
+  async (req, res) => {
+    const { userId } = req.body;
+    const { chapter } = req.params;
+
+    try {
+      // Fetch the user's score for the specified chapter
+      const userScore = await Score.findOne({ userId });
+
+      if (!userScore || !userScore[chapter]) {
+        return res.status(404).json({
+          error: `Score for chapter ${chapter} not found for the user`,
+        });
+      }
+
+      const scoreForChapter = userScore[chapter];
+      res.json({ chapter, score: scoreForChapter });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
