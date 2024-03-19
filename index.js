@@ -23,12 +23,6 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
-// app.use(
-//   cors({
-//     origin: "https://course-instruction.netlify.app",
-//     credentials: true,
-//   })
-// );
 
 // Use middleware
 app.use(express.json());
@@ -219,7 +213,7 @@ app.post(
   cors(corsOptions),
   verifyToken,
   async (req, res) => {
-    const { userId } = req.body;
+    const { userId } = req.user.userid;
     const { chapter } = req.params;
     const { score } = req.body;
 
@@ -275,7 +269,7 @@ app.get(
   cors(corsOptions),
   verifyToken,
   async (req, res) => {
-    const { userId } = req.body;
+    const { userId } = req.user.userid;
     const { chapter } = req.params;
 
     try {
