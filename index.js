@@ -207,13 +207,31 @@ const fetchTokenMiddleware = async (req, res, next) => {
 };
 
 // Use the middleware for protected routes
+app.get("/api/dashboard", cors(corsOptions), async (req, res) => {
+  const accessToken = req.accessToken;
+  try {
+    const user = await Profile.findOne({ email: req.user.email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return user data in the response
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 app.use("/api/dashboard", verifyToken, fetchTokenMiddleware);
+
 app.post(
   "/api/submit-quiz/:chapter",
   cors(corsOptions),
   verifyToken,
   async (req, res) => {
-    const { userId } = req.user.userid;
+    const userId = req.user.userid;
     const { chapter } = req.params;
     const { score } = req.body;
 
@@ -246,23 +264,6 @@ app.post(
     }
   }
 );
-
-app.get("/api/dashboard", cors(corsOptions), async (req, res) => {
-  const accessToken = req.accessToken;
-  try {
-    const user = await Profile.findOne({ email: req.user.email });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Return user data in the response
-    res.status(200).json({ user });
-  } catch (error) {
-    console.error("Error fetching user data:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
 
 app.get(
   "/api/get-score/:chapter",
