@@ -122,8 +122,13 @@ app.post("/api/signup", cors(corsOptions), async (req, res) => {
     });
     await user.save();
 
+    // Create score document for the user
+    const score = new Score({ userId: user?._id });
+    await score.save();
+
     res.status(201).json({
       message: `${firstname} ${lastname} registered successfully`,
+      userId: user?._id,
     });
   } catch (error) {
     console.error("Error creating user:", error);
@@ -209,7 +214,7 @@ const fetchTokenMiddleware = async (req, res, next) => {
 // Use the middleware for protected routes
 app.use("/api/dashboard", verifyToken, fetchTokenMiddleware);
 
-app.post(
+/*app.post(
   "/api/submit-quiz/:chapter",
   cors(corsOptions),
   verifyToken,
@@ -247,6 +252,7 @@ app.post(
     }
   }
 );
+*/
 
 app.get("/api/dashboard", cors(corsOptions), async (req, res) => {
   const accessToken = req.accessToken;
@@ -264,13 +270,13 @@ app.get("/api/dashboard", cors(corsOptions), async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
+/*
 app.get(
   "/api/get-score/:chapter",
   cors(corsOptions),
   verifyToken,
   async (req, res) => {
-    const { userId } = req.user.userid;
+    const { userId } = req.user;
     const { chapter } = req.params;
 
     try {
@@ -291,6 +297,58 @@ app.get(
     }
   }
 );
+*/
+app.get("/api/get-user-scores/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Find scores for the specified user
+    const userScores = await Score.findOne({ userId });
+
+    if (!userScores) {
+      return res.status(404).json({
+        message: "Scores not found for the user",
+      });
+    }
+
+    // Return the user's scores
+    res.status(200).json({ scores: userScores });
+  } catch (error) {
+    console.error("Error fetching user scores:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/api/update-user-score/:userId/:chapter", async (req, res) => {
+  const { userId, chapter } = req.params;
+  const { score } = req.body;
+
+  try {
+    // Find the score document for the user
+    const userScore = await Score.findOne({ userId });
+
+    if (!userScore) {
+      return res.status(404).json({
+        message: "Scores not found for the user",
+      });
+    }
+
+    userScore.chapterScores = userScore.chapterScores || {};
+
+    // Update the score for the specified chapter
+    userScore.chapterScores[chapter] = score;
+    await userScore.save();
+    console.log({ updatedScore: score });
+
+    res.status(200).json({
+      message: `Score updated for ${chapter}`,
+      updatedScore: userScore,
+    });
+  } catch (error) {
+    console.error("Error updating user score:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
