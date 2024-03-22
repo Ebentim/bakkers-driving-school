@@ -319,13 +319,17 @@ app.get("/api/get-user-scores/:userId", async (req, res) => {
   }
 });
 
-app.post("/api/update-user-score/:userId/:chapter", async (req, res) => {
+app.put("/api/update-user-score/:userId/:chapter", async (req, res) => {
   const { userId, chapter } = req.params;
   const { score } = req.body;
 
   try {
     // Find the score document for the user
-    const userScore = await Score.findOne({ userId });
+    const userScore = await Score.findOneAndUpdate(
+      { userId },
+      { $set: { [chapter]: score } },
+      { new: true }
+    );
 
     if (!userScore) {
       return res.status(404).json({

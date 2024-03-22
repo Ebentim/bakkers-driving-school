@@ -7,10 +7,6 @@ const ScoreSchema = mongoose.Schema(
       ref: "Profile",
       required: true,
     },
-    accessToken: {
-      type: String,
-      required: true,
-    },
     chapterone: {
       type: Number,
       default: 0,
