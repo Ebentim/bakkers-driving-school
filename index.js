@@ -11,8 +11,6 @@ const crypto = require("crypto");
 const secretKey = crypto.randomBytes(256).toString("hex");
 require("dotenv").config();
 
-// const dbLink = process.env.MONGODO_URI;
-
 const allowedOrigin = [
   "https://bakkers-driving-school.onrender.com",
   "https://course-instruction.vercel.app",
@@ -24,11 +22,9 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Use middleware
 app.use(express.json());
 app.use(helmet());
 
-// Database connection with error handling
 mongoose
   .connect(
     "mongodb+srv://timileyinolayuwa:CMvRsRvRHxV3E1Aj@signupdata.ybajhry.mongodb.net/?retryWrites=true&w=majority",
@@ -37,37 +33,36 @@ mongoose
       useUnifiedTopology: true,
     }
   )
-  .then(() => console.log("Database connected successfully"))
+  .then(() => {
+    console.log("Database connected successfully");
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
   .catch((error) => {
     console.error("Database connection failed:", error);
-    process.exit(1); // Exit the application if the database connection fails
+    process.exit(1);
   });
 
-// Define mongoose model
 const Profile = require("./models/profile.model");
 const Token = require("./models/token.model");
 const Score = require("./models/score.model");
 
-// Function to save or update token in the database
 const saveOrUpdateTokenToDatabase = async (userId, token) => {
   try {
-    // Check if a token already exists for the user
     const existingToken = await Token.findOne({ userId });
 
     if (existingToken) {
-      // Update the existing token
       existingToken.accessToken = token;
       existingToken.expiresAt = Date.now() + 3600000;
       await existingToken.save();
     } else {
-      // Create a new Token document
       const newToken = new Token({
         userId,
         accessToken: token,
         expiresAt: Date.now() + 3600000,
       });
 
-      // Save the token document to the database
       await newToken.save();
     }
   } catch (error) {
@@ -80,7 +75,6 @@ const saveOrUpdateTokenToDatabase = async (userId, token) => {
 // Function to fetch token from the database
 const fetchTokenFromDatabase = async (userId) => {
   try {
-    // Find the token document for the user
     const tokenDoc = await Token.findOne({ userId });
 
     if (tokenDoc) {
@@ -93,11 +87,9 @@ const fetchTokenFromDatabase = async (userId) => {
   }
 };
 
-// Saves user signup details
 app.post("/api/signup", cors(corsOptions), async (req, res) => {
   const { firstname, lastname, address, email, password, birthdate } = req.body;
 
-  // Validate required fields
   if (
     !firstname ||
     !lastname ||
@@ -121,8 +113,6 @@ app.post("/api/signup", cors(corsOptions), async (req, res) => {
       password: hashedPassword,
     });
     await user.save();
-
-    // Create score document for the user
     const score = new Score({ userId: user?._id });
     await score.save();
 
@@ -159,9 +149,7 @@ app.post("/api/signin", cors(corsOptions), async (req, res) => {
     const token = jwt.sign({ userid: user._id, email: user.email }, secretKey, {
       expiresIn: "1h",
     });
-    // saves or updates Token to the database
     await saveOrUpdateTokenToDatabase(user._id, token);
-    // Return the token in the response
     res.status(200).json({ message: "Sign-in successful", accessToken: token });
   } catch (error) {
     console.error("Error during sign-in:", error);
@@ -169,7 +157,6 @@ app.post("/api/signin", cors(corsOptions), async (req, res) => {
   }
 });
 
-// Add this middleware function
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization;
 
@@ -186,12 +173,11 @@ const verifyToken = (req, res, next) => {
         .json({ message: "Unauthorized - Invalid Access Token" });
     }
 
-    req.user = decoded; // Attach user information to the request object
+    req.user = decoded;
     next();
   });
 };
 
-// middleware to fetch the access token
 const fetchTokenMiddleware = async (req, res, next) => {
   const userId = req.user.userid;
 
@@ -199,11 +185,10 @@ const fetchTokenMiddleware = async (req, res, next) => {
     const token = await fetchTokenFromDatabase(userId);
 
     if (token.expiresAt < Date.now()) {
-      // Token has expired, delete it from the database
       await Token.deleteOne({ userId });
       throw new Error("Token has expired");
     }
-    req.accessToken = token.accessToken; // Attach the token to the request object
+    req.accessToken = token.accessToken;
     next();
   } catch (error) {
     console.error("Error fetching token:", error);
@@ -222,7 +207,6 @@ app.get("/api/dashboard", cors(corsOptions), async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Return user data in the response
     res.status(200).json({ user });
   } catch (error) {
     console.error("Error fetching user data:", error);
@@ -233,7 +217,6 @@ app.get("/api/get-user-scores/:userId", async (req, res) => {
   const { userId } = req.params;
 
   try {
-    // Find scores for the specified user
     const userScores = await Score.findOne({ userId });
 
     if (!userScores) {
@@ -242,7 +225,6 @@ app.get("/api/get-user-scores/:userId", async (req, res) => {
       });
     }
 
-    // Return the user's scores
     res.status(200).json({ scores: userScores });
   } catch (error) {
     console.error("Error fetching user scores:", error);
@@ -255,7 +237,6 @@ app.put("/api/update-user-score/:userId/:chapter", async (req, res) => {
   const { score } = req.body;
 
   try {
-    // Find the score document for the user
     const userScore = await Score.findOneAndUpdate(
       { userId },
       { $set: { [chapter]: score } },
@@ -270,7 +251,6 @@ app.put("/api/update-user-score/:userId/:chapter", async (req, res) => {
 
     userScore.chapterScores = userScore.chapterScores || {};
 
-    // Update the score for the specified chapter
     userScore.chapterScores[chapter] = score;
     await userScore.save();
     console.log({ updatedScore: score });
@@ -285,6 +265,37 @@ app.put("/api/update-user-score/:userId/:chapter", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.get("/api/time/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const currentTime = await Profile.findById(userId);
+    if (currentTime) {
+      res.status(200).json({ currentTime });
+    } else {
+      throw new Error("User not found");
+    }
+  } catch (error) {
+    console.error("Error fetching current time:", error);
+    res.status(404).json({ error: "Failed to fetch current time" });
+  }
+});
+
+app.put("/api/time/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  const { time } = req.body;
+  try {
+    const user = await Profile.findByIdAndUpdate(
+      userId,
+      { startingtime: time },
+      { new: true }
+    );
+    if (!user) {
+      throw new Error("User not found");
+    }
+    console.log("User found and updated");
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Error updating user time:", error);
+    res.status(404).json({ error: "Failed to update user time" });
+  }
 });
