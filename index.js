@@ -127,6 +127,33 @@ const fetchAdminTokenFromDatabase = async (userId) => {
     throw new Error("Error fetching token from the database: " + error.message);
   }
 };
+// app.post("/api/adminsignup", cors(corsOptions), async (req, res) => {
+//   const { firstname, lastname, email, password } = req.body;
+//   if (!firstname || !lastname || !email || !password) {
+//     return res.status(400).json({ message: "All fields are required" });
+//   }
+
+//   try {
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     const user = new Dashboard({
+//       firstname,
+//       lastname,
+//       email,
+//       password: hashedPassword,
+//     });
+//     await user.save();
+//     res.status(201).json({ message: "User created successfully!" });
+//     console.log(user);
+//   } catch (error) {
+//     console.error("Error creating user:", error);
+//     if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+//       return res.status(400).json({ message: "Email already exists" });
+//     }
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
 app.post("/api/adminsignup", cors(corsOptions), async (req, res) => {
   const { firstname, lastname, email, password } = req.body;
   if (!firstname || !lastname || !email || !password) {
@@ -134,6 +161,12 @@ app.post("/api/adminsignup", cors(corsOptions), async (req, res) => {
   }
 
   try {
+    const profileCount = await Dashboard.countDocuments();
+
+    if (profileCount > 0) {
+      return res.status(400).json({ message: "Maximum profile limit reached" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new Dashboard({
@@ -144,7 +177,6 @@ app.post("/api/adminsignup", cors(corsOptions), async (req, res) => {
     });
     await user.save();
     res.status(201).json({ message: "User created successfully!" });
-    console.log(user);
   } catch (error) {
     console.error("Error creating user:", error);
     if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
@@ -153,6 +185,7 @@ app.post("/api/adminsignup", cors(corsOptions), async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 app.get("/api/adminsignup", (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.json();
