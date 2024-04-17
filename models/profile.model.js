@@ -5,28 +5,36 @@ ProfileSchema = mongoose.Schema(
   {
     firstname: {
       type: String,
-      required: [true, "Please Enter your first name"],
+      required: [true, "Please enter your first name"],
     },
     lastname: {
       type: String,
-      required: [true, "Please Enter your last name"],
+      required: [true, "Please enter your last name"],
     },
     address: {
       type: String,
-      required: [true, "Please Enter your address"],
+      required: [true, "Please enter your address"],
+    },
+    pnumber: {
+      type: Number,
+      required: [true, "Please enter your parent's phone number"],
+    },
+    ynumber: {
+      type: Number,
+      required: [true, "Please enter your phone number"],
     },
     email: {
       type: String,
-      required: [true, "Please Enter your email"],
+      required: [true, "Please enter your email"],
       unique: true,
     },
     birthdate: {
       type: Date,
-      required: [true, "Please Enter your date of birth"],
+      required: [true, "Please enter your date of birth"],
     },
     password: {
       type: String,
-      required: [true, "Please Enter your password"],
+      required: [true, "Please enter your password"],
     },
     startingtime: {
       type: Number,

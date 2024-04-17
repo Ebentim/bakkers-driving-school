@@ -127,32 +127,6 @@ const fetchAdminTokenFromDatabase = async (userId) => {
     throw new Error("Error fetching token from the database: " + error.message);
   }
 };
-// app.post("/api/adminsignup", cors(corsOptions), async (req, res) => {
-//   const { firstname, lastname, email, password } = req.body;
-//   if (!firstname || !lastname || !email || !password) {
-//     return res.status(400).json({ message: "All fields are required" });
-//   }
-
-//   try {
-//     const hashedPassword = await bcrypt.hash(password, 10);
-
-//     const user = new Dashboard({
-//       firstname,
-//       lastname,
-//       email,
-//       password: hashedPassword,
-//     });
-//     await user.save();
-//     res.status(201).json({ message: "User created successfully!" });
-//     console.log(user);
-//   } catch (error) {
-//     console.error("Error creating user:", error);
-//     if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
-//       return res.status(400).json({ message: "Email already exists" });
-//     }
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// });
 
 app.post("/api/adminsignup", cors(corsOptions), async (req, res) => {
   const { firstname, lastname, email, password } = req.body;
@@ -265,12 +239,23 @@ const fetchAdminTokenMiddleware = async (req, res, next) => {
 
 // students
 app.post("/api/signup", cors(corsOptions), async (req, res) => {
-  const { firstname, lastname, address, email, password, birthdate } = req.body;
+  const {
+    firstname,
+    lastname,
+    address,
+    pnumber,
+    ynumber,
+    email,
+    password,
+    birthdate,
+  } = req.body;
 
   if (
     !firstname ||
     !lastname ||
     !address ||
+    !pnumber ||
+    !ynumber ||
     !email ||
     !password ||
     !birthdate
@@ -285,6 +270,8 @@ app.post("/api/signup", cors(corsOptions), async (req, res) => {
       firstname,
       lastname,
       address,
+      pnumber,
+      ynumber,
       email,
       birthdate,
       password: hashedPassword,
