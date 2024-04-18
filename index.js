@@ -221,44 +221,32 @@ const fetchAdminTokenMiddleware = async (req, res, next) => {
   }
 };
 
-// app.get("/api/admindashboard", cors(corsOptions), async (req, res) => {
-//   const accessToken = req.accessToken;
-//   try {
-//     const user = await Dashboard.findOne({ email: req.user.email });
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     res.status(200).json({ user });
-//   } catch (error) {
-//     console.error("Error fetching user data:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// });
-
 // students
 app.post("/api/signup", cors(corsOptions), async (req, res) => {
   const {
     firstname,
     lastname,
     address,
-    pnumber,
     ynumber,
     email,
     password,
     birthdate,
+    pnumber,
+    pname,
+    pemail,
   } = req.body;
 
   if (
     !firstname ||
     !lastname ||
     !address ||
-    !pnumber ||
     !ynumber ||
     !email ||
     !password ||
-    !birthdate
+    !birthdate ||
+    !pnumber ||
+    !pname ||
+    !pemail
   ) {
     return res.status(400).json({ message: "All fields are required" });
   }
@@ -270,11 +258,13 @@ app.post("/api/signup", cors(corsOptions), async (req, res) => {
       firstname,
       lastname,
       address,
-      pnumber,
       ynumber,
       email,
-      birthdate,
       password: hashedPassword,
+      birthdate,
+      pnumber,
+      pname,
+      pemail,
     });
     await user.save();
     const score = new Score({ userId: user?._id });
