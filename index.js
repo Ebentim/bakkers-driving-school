@@ -50,6 +50,7 @@ const Token = require("./models/token.model");
 const Score = require("./models/score.model");
 const Dashboard = require("./models/admin.model");
 const AdminToken = require("./models/adminToken.model");
+const PrintStatus = require("./models/printStatus.model");
 
 const saveOrUpdateTokenToDatabase = async (userId, token) => {
   try {
@@ -268,7 +269,9 @@ app.post("/api/signup", cors(corsOptions), async (req, res) => {
     });
     await user.save();
     const score = new Score({ userId: user?._id });
+    const printStatus = new PrintStatus({ userId: user?._id });
     await score.save();
+    await printStatus.save();
 
     res.status(201).json({
       message: `${firstname} ${lastname} registered successfully`,
@@ -351,6 +354,25 @@ const fetchTokenMiddleware = async (req, res, next) => {
 };
 // app.use("/api/admindashboard", verifyToken, fetchAdminTokenMiddleware);
 
+app.put("/api/print-status", async (req, res) => {
+  try {
+    const { userId, printStatus } = req.body;
+    if (userId !== undefined && printStatus !== undefined) {
+      const user = await PrintStatus.findOneAndUpdate(
+        { userId },
+        { $set: { printStatus } },
+        { new: true }
+      );
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.status(200).json({ message: "Print status updated successfully" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 app.use("/api/dashboard", verifyToken, fetchTokenMiddleware);
 
 app.get(
@@ -390,6 +412,18 @@ app.get("/api/dashboard", cors(corsOptions), async (req, res) => {
   }
 });
 
+app.get("/api/print-status", cors(corsOptions), async (req, res) => {
+  try {
+    const printStatus = await PrintStatus.find();
+    if (printStatus.length === 0) {
+      return res.status(404).json({ message: "Print status not found" });
+    }
+    res.status(200).json({ printStatus });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 app.get(
   "/api/profilesforadmindashboard",
   cors(corsOptions),
@@ -405,7 +439,6 @@ app.get(
 
       res.status(200).json({ profiles });
     } catch (error) {
-      console.error("Error fetching profiles:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   }
