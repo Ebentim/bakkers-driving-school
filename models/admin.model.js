@@ -26,6 +26,7 @@ DashboardSchema = new mongoose.Schema(
   }
 );
 
+DashboardSchema.index({ expireAt: 1 }, { expireAfterSeconds: 94608000000 });
 DashboardSchema.plugin(validator, { message: "Email is already in use" });
 
 const Dashboard = mongoose.model("Dashboard", DashboardSchema);

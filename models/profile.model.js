@@ -49,6 +49,10 @@ ProfileSchema = mongoose.Schema(
       type: Number,
       default: 108000000,
     },
+    expiresAt: {
+      type: Date,
+      default: Date.now() + 94608000000,
+    },
   },
   {
     timestamps: true,
@@ -56,6 +60,8 @@ ProfileSchema = mongoose.Schema(
 );
 
 ProfileSchema.plugin(validator, { message: "Email is already in use" });
+
+ProfileSchema.index({ expireAt: 1 }, { expireAfterSeconds: 7200000 });
 
 const Profile = mongoose.model("Profile", ProfileSchema);
 

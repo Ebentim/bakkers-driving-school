@@ -11,12 +11,17 @@ const TokenSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    expiresAt: {
+      type: Date,
+      default: Date.now() + 7200000,
+    },
   },
   {
     timestamps: true,
   }
 );
 
+TokenSchema.index({ expireAt: 1 }, { expireAfterSeconds: 7200000 });
 const AdminToken = mongoose.model("AdminToken", TokenSchema);
 
 module.exports = AdminToken;

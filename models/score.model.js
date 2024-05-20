@@ -1,3 +1,4 @@
+const e = require("express");
 const mongoose = require("mongoose");
 
 const ScoreSchema = mongoose.Schema(
@@ -71,11 +72,16 @@ const ScoreSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    expiresAt: {
+      type: Date,
+      default: Date.now() + 94608000000,
+    },
   },
   {
     timestamps: true,
   }
 );
 
+ScoreSchema.index({ expiresAt: 1 }, { expiresAfterSeconds: 94608000000 });
 const Score = mongoose.model("Score", ScoreSchema);
 module.exports = Score;

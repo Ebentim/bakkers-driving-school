@@ -13,12 +13,16 @@ const printedCertificates = mongoose.Schema(
       required: true,
       default: false,
     },
+    expiresAt: {
+      type: Date,
+      default: Date.now() + 94608000000,
+    },
   },
   {
     timestamps: true,
   }
 );
-
+printedCertificates.index({ expireAt: 1 }, { expireAfterSeconds: 94608000000 });
 const PrintStatus = mongoose.model("PrintStatus", printedCertificates);
 
 module.exports = PrintStatus;

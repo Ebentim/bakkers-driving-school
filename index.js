@@ -100,7 +100,7 @@ const saveOrUpdateAdminTokenToDatabase = async (userId, token) => {
       existingToken.expiresAt = Date.now() + 3600000;
       await existingToken.save();
     } else {
-      const newToken = new Token({
+      const newToken = new AdminToken({
         userId,
         accessToken: token,
         expiresAt: Date.now() + 3600000,
