@@ -13,7 +13,7 @@ const TokenSchema = mongoose.Schema(
     },
     expireAt: {
       type: Date,
-      default: Date.now() + 7200000, //expires after 2 hours
+      default: Date.now() + 94608000000, //expires after 2 hours
     },
   },
   {
@@ -21,7 +21,7 @@ const TokenSchema = mongoose.Schema(
   }
 );
 
-TokenSchema.index({ expireAt: 1 }, { expireAfterSeconds: 7200000 });
+TokenSchema.index({ expireAt: 1 }, { expireAfterSeconds: 94608000000 });
 const Token = mongoose.model("Token", TokenSchema);
 
 module.exports = Token;
