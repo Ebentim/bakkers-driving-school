@@ -354,7 +354,7 @@ const fetchTokenMiddleware = async (req, res, next) => {
 };
 // app.use("/api/admindashboard", verifyToken, fetchAdminTokenMiddleware);
 
-app.put("/api/print-status", async (req, res) => {
+app.put("/api/print-status", cors(corsOptions), async (req, res) => {
   try {
     const { userId, printStatus } = req.body;
     if (userId !== undefined && printStatus !== undefined) {
