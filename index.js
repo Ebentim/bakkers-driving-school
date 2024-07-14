@@ -1,4 +1,6 @@
 const fs = require("fs");
+const keepAlive = require("./keepAlive");
+const schedule = require("node-schedule");
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -75,7 +77,8 @@ const saveOrUpdateTokenToDatabase = async (userId, token) => {
     );
   }
 };
-
+// schedule-job
+schedule.scheduleJob("*/5 * * * *", keepAlive);
 // Function to fetch token from the database
 const fetchTokenFromDatabase = async (userId) => {
   try {
